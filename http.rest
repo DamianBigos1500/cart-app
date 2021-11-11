@@ -1,0 +1,8 @@
+POST http://localhost:3000/admin/pages/add-page
+Content-Type: application/json
+
+{
+  "title": "", 
+  "slug": "password",
+  "content": ""
+}
