@@ -59,8 +59,7 @@ router.post('/add-page',
     Page.findOne({slug: slug}, (err, page) => {
       if(page) {
         req.flash('danger', 'Page slug exists, choose another.')
-        console.log(page)
-        res.render('index', {
+        res.render('admin/addPage', {
           title: title,
           slug: slug,
           content: content
@@ -87,11 +86,9 @@ router.post('/add-page',
   }
 })
 
-
 /*
-* post reorder pages
+* POST reorder pages
 */ 
-
 router.post('/reorder-pages', (req, res) => {
   console.log(req.body)
   const ids = req.body['id[]']
@@ -116,11 +113,11 @@ router.post('/reorder-pages', (req, res) => {
 })
 
 /*
-* get edit page
+* GET edit page
 */
-router.get('/edit-page/:slug', (req, res) => {
+router.get('/edit-page/:id', (req, res) => {
   
-  Page.findOne({slug: req.params.slug}, (err, page) => {
+  Page.findById(req.params.id, (err, page) => {
     if(err)
       return console.log(err)
 
@@ -134,9 +131,9 @@ router.get('/edit-page/:slug', (req, res) => {
 })
 
 /*
-* post edit page
+* POST edit page
 */
-router.post('/edit-page/:slug',
+router.post('/edit-page/:id',
   body('title', 'Title must have a value').notEmpty(),
   body('title', 'Title min lingth is 4').isLength({ min: 4 }),
   body('content', 'Content must have a value').notEmpty(),
@@ -146,13 +143,11 @@ router.post('/edit-page/:slug',
   let slug = req.body.slug.replace(/\+a+/g, '-').toLowerCase()
   if(slug == '') slug = req.body.title.replace(/\+a+/g, '-').toLowerCase()
   let content = req.body.content
-  let id = req.body.id
+  let id = req.params.id
 
-  
   let errors = validationResult(req)
 
   if(!errors.isEmpty()) {
-    console.log(errors)
     res.render('admin/addPage', {
       errors: errors.array(),
       title: title,
@@ -165,8 +160,7 @@ router.post('/edit-page/:slug',
     Page.findOne({slug: slug, _id: {'$ne': id}}, (err, page) => {
       if(page) {
         req.flash('danger', 'Page slug exists, choose another.')
-        console.log(page)
-        res.render('admin/editPage', { //i don't need slug after link
+        res.render('admin/editPage', {
           title: title,
           slug: slug,
           content: content,
@@ -188,7 +182,7 @@ router.post('/edit-page/:slug',
               return console.log(handleError(err));
   
             req.flash('success', 'Page editted')
-            res.redirect('/admin/pages/edit-page/'+page.slug)
+            res.redirect('/admin/pages/edit-page/' + id)
           })
         })
 
@@ -199,7 +193,7 @@ router.post('/edit-page/:slug',
 })
 
 //
-// get admin page
+// get delete page
 //
 router.get('/delete-page/:id', (req, res) => {
   Page.findByIdAndRemove(req.params.id, (err) => {
