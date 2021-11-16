@@ -33,7 +33,7 @@ router.get('/add-category', (req, res) => {
 })
 
 //
-// post add categry
+// POST add categry
 //
 router.post('/add-category',
   body('title', 'Title must have a value').notEmpty(),

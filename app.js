@@ -4,7 +4,8 @@ const mongoose = require('mongoose');
 const session = require('express-session')
 const expressValidator = require('express-validator')
 const expressMessages = require('express-messages')
-const config = require('./config/database');
+const config = require('./config/database')
+const fileUpload = require('express-fileupload')
 
 // Connect to db
 mongoose.connect(config.database, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -29,6 +30,9 @@ app.use(express.static(path.join(__dirname, 'public')))
 // set global variable
 app.locals.errors = null
 
+// Express fileUpload middleware
+app.use(fileUpload())
+
 // Express Session middleware
 //app.set('trust proxy', 1) // trust first proxy
 app.use(session({
@@ -51,9 +55,11 @@ app.use(function (req, res, next) {
 const pages = require('./routes/pages.js')
 const adminPages = require('./routes/adminPages.js')
 const adminCategories = require('./routes/adminCategories.js')
+const adminProducts = require('./routes/adminProducts.js')
 
 app.use('/admin/pages', adminPages)
 app.use('/admin/categories', adminCategories)
+app.use('/admin/products', adminProducts)
 app.use('/', pages)
 
 // Start server
