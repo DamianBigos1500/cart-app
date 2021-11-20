@@ -1,17 +1,27 @@
 const express = require('express')
 const { body, validationResult } = require('express-validator');
+const mkdirp = require('mkdirp')
+const fs = require('fs-extra')
+const resizeImg = require('resize-img')
 // Get model
-const Page = require('../models/pages')
-
+const Product = require('../models/product')
+const Category = require('../models/category')
 const router = express.Router()
 
 //
-// GET admin page index 
+// GET products index 
 //
 router.get('/', (req, res) => {
-  Page.find({}).sort({sorting: 1}).exec((err, pages) => {
-    res.render('admin/pages', {
-      pages: pages
+  let count
+
+  Product.count((err, c) => {
+    count = c
+  })
+
+  Product.find((err, products) => {
+    res.render('admin/products', {
+      products: products,
+      count: count
     })
   })
 })
