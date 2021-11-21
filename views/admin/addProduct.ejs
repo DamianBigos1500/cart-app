@@ -1,0 +1,60 @@
+<%- include("../layouts/adminHeader.ejs") %>
+
+<h2 class="page-title">Add a product</h2>
+  <a href="/admin/products" class="btn btn-primary">Back to all products</a>
+<br>
+
+<form method="POST" action="/admin/products/add-product" enctype="multipart/form-data">
+
+  <div class="form-group">
+    <label for="">Title</label>
+    <input type="text" class="form-control" name="title" value="<%= title %>" placeholder="Title">
+  </div>
+
+  <div class="form-group">
+    <label for="">Description</label>
+    <textarea name="desc" class="form-control" cols="30" rows="10" placeholder="Description"><%= desc%></textarea>
+  </div>
+
+  <div class="form-group">
+    <label for="">Category</label>
+    <select name="category" class="form-control">
+      <% categories.forEach((cat) => { %>
+        <option value="<%= cat.slug %> "><%= cat.title %> </option>
+      <% }) %>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="">Price</label>
+    <input type="text" class="form-control" name="price" value="<%= price %>" placeholder="Price">
+  </div>
+
+  <div class="form-group">
+    <label for="">Image</label>
+    <input type="file" class="form-control" name="image" id="img">
+    <img src="#" id="imgPreview" alt="">
+  </div>
+
+  <button class="btn btn-default">Submit</button>
+
+</form>
+
+<script>
+
+  img.onchange = evt => {
+    const [file] = img.files
+
+    if (file) {
+      const fileUrl = URL.createObjectURL(file)
+      imgPreview.src = fileUrl
+
+      bodyElement = document.getElementById('imgPreview')
+      bodyElement.width = 200
+      bodyElement.height = 200
+    }
+  }
+
+</script>
+
+<%- include("../layouts/adminFooter.ejs") %>

@@ -26,16 +26,22 @@ router.get('/', (req, res) => {
   })
 })
 
-router.get('/add-page', (req, res) => {
+//
+// GET add product
+//
+router.get('/add-product', (req, res) => {
   
   const title = ''
-  const slug = ''
-  const content = ''
+  const desc = ''
+  const price = ''
 
-  res.render('admin/addPage', {
-    title: title,
-    slug: slug,
-    content: content
+  Category.find((err, categories) => {
+    res.render('admin/addProduct', {
+      title: title,
+      desc: desc,
+      categories: categories,
+      price: price
+    })
   })
 })
 
