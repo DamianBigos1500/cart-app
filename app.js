@@ -31,7 +31,9 @@ app.use(express.static(path.join(__dirname, 'public')))
 app.locals.errors = null
 
 // Express fileUpload middleware
-app.use(fileUpload())
+app.use(fileUpload({
+  limits: { fileSize: 100 * 1024 * 1024 },
+}))
 
 // Express Session middleware
 //app.set('trust proxy', 1) // trust first proxy

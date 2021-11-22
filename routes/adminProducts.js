@@ -1,8 +1,12 @@
 const express = require('express')
-const { body, validationResult } = require('express-validator');
+const { body, validationResult, check } = require('express-validator');
 const mkdirp = require('mkdirp')
 const fs = require('fs-extra')
 const resizeImg = require('resize-img')
+
+// Include fs
+const fsPromises = require('fs').promises
+
 // Get model
 const Product = require('../models/product')
 const Category = require('../models/category')
@@ -46,93 +50,176 @@ router.get('/add-product', (req, res) => {
 })
 
 //
-// POST add page
+// POST add product
 //
-router.post('/add-page',
+router.post('/add-product',
+  [
   body('title', 'Title must have a value').notEmpty(),
-  body('title', 'Title min lingth is 4').isLength({ min: 4 }),
-  body('content', 'Content must have a value').notEmpty(),
+  body('title', 'Title min lingth is 4').isLength({ min: 4 , max: 20}),
+  body('desc', 'Description must have a value').notEmpty(),
+  body('price', 'Price must have a value').isDecimal(),
+],
   (req, res) => {
+    // check image  
+      let imageFile = req.files !== null ? req.files.image.name : ''
 
+
+
+  // body('image', 'You must upload an image').custom((value, filename) => {
+  //   const extension = (path.extname(filename)).toLowerCase(imageFile)
+  //   switch(extension) {
+  //     case '.jpg':
+  //       return '.jpg';
+  //     case '.jpeg':
+  //       return '.jpeg';
+  //     case '.png':
+  //       return '.png';
+  //     case '':
+  //       return '.jpg';
+  //     default:
+  //       return false;
+  //   }
+  // })
+
+  //
   let title = req.body.title
-  let slug = req.body.slug.replace(/\+a+/g, '-').toLowerCase()
-  if(slug == '') slug = req.body.title.replace(/\+a+/g, '-').toLowerCase()
-  let content = req.body.content
+  let slug = title.replace(/\+a+/g, '-').toLowerCase()
+  let desc = req.body.desc
+  let price = req.body.price
+  let category = req.body.category
 
   
   let errors = validationResult(req)
 
   if(!errors.isEmpty()) {
     console.log(errors)
-    res.render('admin/addPage', {
-      errors: errors.array(),
-      title: title,
-      slug: slug,
-      content: content
+    Category.find((err, categories) => {
+      res.render('admin/addProduct', {
+        errors: errors.array(),
+        title: title,
+        desc: desc,
+        categories: categories,
+        price: price
+      })
     })
   }
   else {
-    Page.findOne({slug: slug}, (err, page) => {
-      if(page) {
-        req.flash('danger', 'Page slug exists, choose another.')
-        res.render('admin/addPage', {
-          title: title,
-          slug: slug,
-          content: content
+
+    Product.findOne({slug: slug}, (err, product) => {
+      if(product) {
+        req.flash('danger', 'Product title exists, choose another.')
+        Category.find((err, categories) => {
+          res.render('admin/addProduct', {
+            title: title,
+            desc: desc,
+            categories: categories,
+            price: price
+          })
         })
       }
       else {
-
-        const page = new Page({
+        const price2 = parseFloat(price).toFixed(2)
+        const product = new Product({
           title: title,
           slug: slug,
-          content: content,
-          sorting: 0
+          desc: desc,
+          price: price2,
+          category: category,
+          image: imageFile
         })
 
-        page.save((err) => {
-          if (err)
+        product.save((err) => {
+          if (err){
             return console.log(handleError(err));
+          }
 
-          req.flash('success', 'Page added')
-          res.redirect('/admin/pages')
+          fsPromises.mkdir('public/product_images/' + product.id).then(function() {
+            console.log('Directory created successfully');
+          }).catch(function() {
+              console.log('failed to create directory');
+          });
+
+          fsPromises.mkdir('public/product_images/' + product._id + '/gallery').then(function() {
+            console.log('Directory created successfully');
+          }).catch(function() {
+              console.log('failed to create directory');
+          });
+
+          fsPromises.mkdir('public/product_images/' + product._id + '/gallery/thumbs').then(function() {
+            console.log('Directory created successfully');
+          }).catch(function() {
+              console.log('failed to create directory');
+          });
+
+          if(imageFile != '') {
+            const productImage = req.files.image
+            let path = 'public/product_images/'  +  product._id +  '/' + product.image
+
+            console.log(path)
+
+            productImage.mv(path)
+            .then((result) => {
+              console.log(result)
+            })
+            .catch((err) => {
+              console.log(err)
+            })
+          }
+
+          req.flash('success', 'Product added')
+          res.redirect('/admin/products')
         })
       }
     })
   }
 })
 
-/*
-* POST reorder pages
-*/ 
-router.post('/reorder-pages', (req, res) => {
-  console.log(req.body)
-  const ids = req.body['id[]']
-
-  let count = 0
-
-  for (let i = 0; i < ids.length; i++) {
-    let id = ids[i]
-    count++
-
-    (function(count) {
-      Page.findById(id, (err, page) => {
-        page.sorting = count
-        page.save((err) => {
-          if(err)
-            return console.log(err)
-        })
-      })
-    })(count)
-
-  }
-})
-
-/*
-* GET edit page
-*/
-router.get('/edit-page/:id', (req, res) => {
+//
+// GET edit product
+//
+router.get('/edit-product/:id', (req, res) => {
   
+  let errors
+
+  if(req.session.errors) errors = req.session.errors
+  req.session.errors = null
+
+
+  Category.find((err, categories) => {
+
+    Product.findById(req.params.id, (err, p) => {
+      if(err){
+        console.log(err)
+        res.redirect('/admin/products')
+      } else {
+        const galleryDir = 'public/product_images/' + p._id + '/gallery'
+        const galleryImages = null
+
+        fs.readdir(galleryDir, (err, files) => {
+          if(err) {
+            console.log(err)
+          } else {
+            galleryImages = files
+
+            res.render('admin/addProduct', {
+              title: p.title,
+              errors: errors,
+              desc: p.desc,
+              categories: categories,
+              category: p.category.replace(/\s+/g).toLowerCase(),
+              price: p.price,
+              image: p.image,
+              galleryImages: galleryImages
+            })
+          }
+        })
+      }
+
+    })
+  })
+
+
+
   Page.findById(req.params.id, (err, page) => {
     if(err)
       return console.log(err)

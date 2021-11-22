@@ -6,3 +6,12 @@ Content-Type: application/json
   "slug": "password",
   "content": ""
 }
+###
+POST http://localhost:3000/admin/products/add-products
+Content-Type: application/json
+
+{
+  "title": "", 
+  "slug": "password",
+  "content": ""
+}
