@@ -16,11 +16,12 @@ const router = express.Router()
 // GET products index 
 //
 router.get('/', (req, res) => {
-  let count
+  let count = 1
 
-  Product.count((err, c) => {
+  async() => {await Product.count((err, c) => {
     count = c
   })
+  }
 
   Product.find((err, products) => {
     res.render('admin/products', {
@@ -153,7 +154,7 @@ router.post('/add-product',
 
           if(imageFile != '') {
             const productImage = req.files.image
-            let path = 'public/product_images/'  +  product._id +  '/' + product.image
+            const path = 'public/product_images/'  +  product._id +  '/' + product.image
 
             console.log(path)
 
@@ -193,7 +194,7 @@ router.get('/edit-product/:id', (req, res) => {
         res.redirect('/admin/products')
       } else {
         const galleryDir = 'public/product_images/' + p._id + '/gallery'
-        const galleryImages = null
+        let galleryImages = null
 
         fs.readdir(galleryDir, (err, files) => {
           if(err) {
@@ -201,15 +202,16 @@ router.get('/edit-product/:id', (req, res) => {
           } else {
             galleryImages = files
 
-            res.render('admin/addProduct', {
+            res.render('admin/editProduct', {
               title: p.title,
               errors: errors,
               desc: p.desc,
               categories: categories,
               category: p.category.replace(/\s+/g).toLowerCase(),
-              price: p.price,
+              price: parseFloat(p.price).toFixed(2),
               image: p.image,
-              galleryImages: galleryImages
+              galleryImages: galleryImages,
+              id: p._id
             })
           }
         })
@@ -217,26 +219,12 @@ router.get('/edit-product/:id', (req, res) => {
 
     })
   })
-
-
-
-  Page.findById(req.params.id, (err, page) => {
-    if(err)
-      return console.log(err)
-
-    res.render('admin/editPage', {
-      title: page.title,
-      slug: page.slug,
-      content: page.content,
-      id: page._id
-    })
-  })
 })
 
 /*
 * POST edit page
 */
-router.post('/edit-page/:id',
+router.post('/edit-product/:id',
   body('title', 'Title must have a value').notEmpty(),
   body('title', 'Title min lingth is 4').isLength({ min: 4 }),
   body('content', 'Content must have a value').notEmpty(),
@@ -293,6 +281,29 @@ router.post('/edit-page/:id',
       }
     })
   }
+})
+
+
+//
+// POST product gallery
+//
+router.post('/product-gallery/:id', (req, res) => {
+  let productImage = req.files.file
+  let id = req.params.id
+
+  console.log(productImage)
+  const path = 'public/product_images/' + id + '/gallery' + req.files.file.name
+  console.log(path)
+  const thumbPath = 'public/product_images/' + id + '/gallery/thumbs' + req.files.file.name
+
+  productImage.mv(path)
+  .then((result) => {
+    console.log(result)
+  })
+  .catch((err) => {
+    console.log(err)
+  })
+
 })
 
 //
